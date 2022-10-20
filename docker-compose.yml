@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:14.2
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - keycloak
+
+  keycloak:
+    depends_on:
+      - postgres
+    container_name: local_keycloak
+    environment:
+      DB_VENDOR: postgres
+      DB_ADDR: postgres
+      DB_DATABASE: anima
+      DB_USER: postgres
+      DB_PASSWORD: qwerty123
+    image: jboss/keycloak:latest
+    ports:
+      - "8787:8080"
+    restart: unless-stopped
+
+volumes:
+  pg-data:
