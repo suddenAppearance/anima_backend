@@ -10,6 +10,7 @@ readme = "README.md"
 python = "^3.10"
 fastapi = {extras = ["all"], version = "^0.85.1"}
 python-keycloak = "^2.6.0"
+pkce = "^1.0.3"
 
 
 [build-system]

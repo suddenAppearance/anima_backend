@@ -189,6 +189,14 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "pkce"
+version = "1.0.3"
+description = "PKCE Pyhton generator."
+category = "main"
+optional = false
+python-versions = ">=3"
+
+[[package]]
 name = "pyasn1"
 version = "0.4.8"
 description = "ASN.1 types and codecs"
@@ -432,7 +440,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "249f1128f567af19b74eafc58f14db591df8dfa7eb2b4ea31dfd758eff3d2b8b"
+content-hash = "8237a36e52f322731ccc9d7494c878825960b0c8e6ddbc4c23bcb1a5aa8f2420"
 
 [metadata.files]
 anyio = [
@@ -615,6 +623,10 @@ orjson = [
     {file = "orjson-3.8.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:25b5e48fbb9f0b428a5e44cf740675c9281dd67816149fc33659803399adbbe8"},
     {file = "orjson-3.8.0-cp39-none-win_amd64.whl", hash = "sha256:2058653cc12b90e482beacb5c2d52dc3d7606f9e9f5a52c1c10ef49371e76f52"},
     {file = "orjson-3.8.0.tar.gz", hash = "sha256:fb42f7cf57d5804a9daa6b624e3490ec9e2631e042415f3aebe9f35a8492ba6c"},
+]
+pkce = [
+    {file = "pkce-1.0.3-py3-none-any.whl", hash = "sha256:55927e24c7d403b2491ebe182b95d9dcb1807643243d47e3879fbda5aad4471d"},
+    {file = "pkce-1.0.3.tar.gz", hash = "sha256:9775fd76d8a743d39b87df38af1cd04a58c9b5a5242d5a6350ef343d06814ab6"},
 ]
 pyasn1 = [
     {file = "pyasn1-0.4.8-py2.4.egg", hash = "sha256:fec3e9d8e36808a28efb59b489e4528c10ad0f480e57dcc32b4de5c9d8c9fdf3"},
