@@ -7,6 +7,7 @@ from api.api_v1.api import router as api_v1
 from core import settings
 from core.launch import wait_database
 from middleware.authorization import KeycloakAuthenticationMiddleware, KeycloakAuthBackend
+from middleware.exceptions import exceptions_wrapper
 
 dictConfig(settings.LogConfig().config)
 
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_headers=settings.AppConfig().CORS_ALLOW_HEADERS,
 )
 app.add_middleware(KeycloakAuthenticationMiddleware, backend=KeycloakAuthBackend())
+app.middleware("http")(exceptions_wrapper)
 
 
 @app.on_event("startup")

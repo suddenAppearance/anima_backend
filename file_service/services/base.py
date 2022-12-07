@@ -1,23 +1,36 @@
-import asyncio
-from asyncio import shield
+import logging
 
 from fastapi import Depends
 from fastapi.requests import Request
-from sqlalchemy.exc import DBAPIError
+from fastapi.responses import Response
+from minio import Minio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.api_v1.deps import get_session
-from repositories.projects import ProjectsRepository
+from core import settings
+from repositories.files import FilesRepository
 
 
 class BaseService:
     def __init__(self, request: Request, session: AsyncSession = Depends(get_session)):
         self.request = request
         self.session = session
-        self._projects_repository: ProjectsRepository | None = None
+        self.logger = logging.getLogger("api")
+        self._minio: Minio | None = None
+        self._files_repository: FilesRepository | None = None
 
     @property
-    def projects_repository(self) -> ProjectsRepository:
-        self._projects_repository = self._projects_repository or ProjectsRepository(self.session)
-        return self._projects_repository
+    def minio(self):
+        self._minio = self._minio or Minio(
+            endpoint=settings.MinioConfig().get_url(),
+            access_key=settings.MinioConfig().MINIO_ACCESS_KEY,
+            secret_key=settings.MinioConfig().MINIO_SECRET_KEY,
+            secure=settings.MinioConfig().MINIO_SECURE
+        )
+        return self._minio
+
+    @property
+    def files_repository(self):
+        self._files_repository = self._files_repository or FilesRepository(self.session)
+        return self._files_repository
 

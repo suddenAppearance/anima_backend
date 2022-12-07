@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.requests import Request
 
 from api.api_v1.deps import auth_required
+from api.api_v1.endpoints.animation import router as animation_router
 from models import create_async_session, create_session
 from schemas.base import User
 
@@ -26,3 +27,6 @@ async def healthcheck():
 @router.get("/me/", response_model=User, dependencies=[Depends(auth_required)])
 async def get_current_user(request: Request):
     return request.user
+
+
+router.include_router(animation_router, prefix="/animations", tags=["animations"])

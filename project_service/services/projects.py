@@ -10,7 +10,8 @@ class ProjectsService(BaseService):
         return self.projects_repository
 
     async def create(self, project: ProjectCreateSchema):
-        await self.repository.create(Project(**project.dict(), author_id=self.request.user.sub))
+        project = await self.repository.create(Project(**project.dict(), author_id=self.request.user.sub))
+        return ProjectRetrieveSchema.from_orm(project)
 
     async def get_all(self) -> list[ProjectRetrieveSchema]:
         return [ProjectRetrieveSchema.from_orm(project) for project in await self.repository.get_all()]

@@ -32,9 +32,20 @@ class DatabaseSettings(BaseSettings):
         )
 
 
-class Settings(BaseSettings):
-    KEYCLOAK_REALM: str
-    KEYCLOAK_URL: str
+class MinioConfig(BaseSettings):
+    MINIO_SERVER_HOST: str = "minio"
+    MINIO_SERVER_PORT: str = "9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_SECURE: bool = False
+
+    def get_url(self):
+        return str(
+            Url(
+                host=self.MINIO_SERVER_HOST,
+                port=self.MINIO_SERVER_PORT
+            )
+        )
 
 
 class LogConfig(BaseSettings):

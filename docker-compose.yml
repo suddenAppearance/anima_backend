@@ -51,6 +51,23 @@ services:
     logging:
       driver: none
 
+  file-service-db:
+    image: postgres:14.2
+    ports:
+      - "32432:5432"
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg-file-service-data:/var/lib/postgresql/data
+
+    logging:
+      driver: none
+
   project-service:
     build:
       context: project_service
@@ -66,7 +83,6 @@ services:
       - "8000:8000"
     depends_on:
       - project-service-db
-      - keycloak
 
   animation-service:
     build:
@@ -83,7 +99,24 @@ services:
       - "8001:8000"
     depends_on:
       - animation-service-db
-      - keycloak
+
+  file-service:
+    build:
+      context: file_service
+      dockerfile: Dockerfile
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: file-service-db
+    volumes:
+      - ./file_service:/app
+    ports:
+      - "8002:8000"
+    depends_on:
+      - file-service-db
+      - minio
+
 
   keycloak:
     depends_on:
@@ -105,14 +138,19 @@ services:
   minio:
     image: minio/minio:latest
     restart: unless-stopped
+    ports:
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
     env_file:
       - .env
-    command: server --address 0.0.0.0:9000 --console-address 0.0.0.0:9001 /data
+    command: server --address 0.0.0.0:${MINIO_SERVER_PORT} --console-address 0.0.0.0:${MINIO_CONSOLE_PORT} /data
     volumes:
       - minio-data:/data
+    logging:
+      driver: none
 
 volumes:
   pg-data:
   pg-project-service-data:
   pg-animation-service-data:
+  pg-file-service-data:
   minio-data:

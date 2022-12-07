@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.requests import Request
 
 from api.api_v1.deps import auth_required
-from api.api_v1.endpoints.projects import router as projects_router
+from api.api_v1.endpoints.files import router as files_router
 from models import create_async_session, create_session
 from schemas.base import User
 
@@ -28,3 +28,5 @@ async def healthcheck():
 async def get_current_user(request: Request):
     return request.user
 
+
+router.include_router(files_router, prefix="/files", tags=["files"])

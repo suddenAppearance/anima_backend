@@ -32,20 +32,6 @@ class DatabaseSettings(BaseSettings):
         )
 
 
-class MinioConfig(BaseSettings):
-    MINIO_SERVER_HOST: str = "minio"
-    MINIO_SERVER_PORT: str = "9000"
-
-    def get_url(self):
-        return str(
-            Url(
-                scheme="http",
-                host=self.MINIO_SERVER_HOST,
-                port=self.MINIO_SERVER_PORT
-            )
-        )
-
-
 class LogConfig(BaseSettings):
     config: dict = {
         "version": 1,

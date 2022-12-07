@@ -1,3 +1,4 @@
+import logging
 from asyncio import shield
 from typing import AsyncGenerator
 
@@ -7,6 +8,8 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import create_async_session
+
+logger = logging.getLogger("api")
 
 bearer = HTTPBearer()
 
@@ -19,11 +22,18 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     session = create_async_session()
     try:
         yield session
+        try:
+            await session.commit()
+            logger.info("Transaction has been commited...")
+        except DBAPIError:
+            await session.rollback()
+            logger.info("Transaction has been rolled back...")
+    except Exception:
+        await session.rollback()
+        logger.info("Transaction has been rolled back...")
+        raise
     finally:
         if session:
-            try:
-                await session.commit()
-            except DBAPIError:
-                await session.rollback()
             await shield(session.close())
             await session.close()
+            logger.info("Closed session...")
