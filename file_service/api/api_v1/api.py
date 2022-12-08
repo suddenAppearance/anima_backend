@@ -21,7 +21,7 @@ async def healthcheck():
             except Exception:
                 pass
 
-            return {"asyncpg_connection": async_query, "psycopg2_connection": sync_query, "project_service": True}
+            return {"asyncpg_connection": async_query, "psycopg2_connection": sync_query, "file_service": True}
 
 
 @router.get("/me/", response_model=User, dependencies=[Depends(auth_required)])

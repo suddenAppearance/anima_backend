@@ -12,8 +12,8 @@ from middleware.exceptions import exceptions_wrapper
 dictConfig(settings.LogConfig().config)
 
 app = FastAPI(
-    title="Projects Service Anima API",
-    description="Сервис управления проектами пользователя"
+    title="File Service Anima API",
+    description="Сервис работы с файлами"
 )
 
 # Middleware

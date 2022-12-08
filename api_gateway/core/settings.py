@@ -1,4 +1,5 @@
-from pydantic import BaseSettings
+from httpx import AsyncClient
+from pydantic import BaseSettings, AnyUrl
 from urllib3.util import Url
 
 
@@ -30,6 +31,13 @@ class DatabaseSettings(BaseSettings):
                 path=self.POSTGRES_DB
             )
         )
+
+
+class KeycloakSettings(BaseSettings):
+    KEYCLOAK_HOST: str
+    KEYCLOAK_REALM: str
+    KEYCLOAK_ADMIN_EMAIL: str
+    KEYCLOAK_ADMIN_PASSWORD: str
 
 
 class LogConfig(BaseSettings):
@@ -68,6 +76,12 @@ class LogConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
-    CORS_ALLOW_METHODS = ["*"]
-    CORS_ALLOW_ORIGINS = ["*"]
-    CORS_ALLOW_HEADERS = ["*"]
+    CORS_ALLOW_METHODS: list[str] = ["*"]
+    CORS_ALLOW_ORIGINS: list[str] = ["*"]
+    CORS_ALLOW_HEADERS: list[str] = ["*"]
+
+
+class GatewaySettings(BaseSettings):
+    PROJECT_SERVICE_GATEWAY: AnyUrl
+    ANIMATION_SERVICE_GATEWAY: AnyUrl
+    FILE_SERVICE_GATEWAY: AnyUrl

@@ -13,7 +13,7 @@ dictConfig(settings.LogConfig().config)
 
 app = FastAPI(
     title="Projects Service Anima API",
-    description="Сервис управления проектами пользователя"
+    description="Сервис управления проектами"
 )
 
 # Middleware

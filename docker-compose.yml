@@ -84,6 +84,20 @@ services:
     depends_on:
       - project-service-db
 
+  api-gateway:
+    build:
+      context: api_gateway
+      dockerfile: Dockerfile
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    env_file:
+      - .env
+    volumes:
+      - ./api_gateway:/app
+    ports:
+      - "8888:8000"
+    depends_on:
+      - keycloak
+
   animation-service:
     build:
       context: animation_service
@@ -122,17 +136,16 @@ services:
     depends_on:
       - postgres
     container_name: local_keycloak
-    logging:
-      driver: none
     environment:
       DB_VENDOR: postgres
       DB_ADDR: postgres
       DB_DATABASE: anima
       DB_USER: postgres
       DB_PASSWORD: qwerty123
+      KEYCLOAK_LOGLEVEL: DEBUG
     image: jboss/keycloak:latest
     ports:
-      - "8787:8080"
+      - "8080:8080"
     restart: unless-stopped
 
   minio:
