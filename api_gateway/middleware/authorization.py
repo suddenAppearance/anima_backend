@@ -4,6 +4,7 @@ import jwt
 import pydantic
 from fastapi.responses import JSONResponse
 from fastapi.security.utils import get_authorization_scheme_param
+from keycloak import KeycloakAuthenticationError
 from starlette.authentication import AuthenticationBackend, AuthenticationError
 from starlette.middleware.authentication import (
     AuthenticationMiddleware as BaseAuthenticationMiddleware,
@@ -26,8 +27,10 @@ class KeycloakAuthBackend(AuthenticationBackend):
             raise AuthenticationError("Invalid authentication scheme")
         try:
             userinfo = keycloak_gateway.userinfo(token=credentials)
-        except jwt.DecodeError:
-            raise AuthenticationError(f"Invalid JWT token")
+        except KeycloakAuthenticationError:
+            raise AuthenticationError(f"Token verification failed")
+        except Exception:
+            raise AuthenticationError(f"Something went wrong...")
         try:
             user = User(**userinfo)
             return True, user

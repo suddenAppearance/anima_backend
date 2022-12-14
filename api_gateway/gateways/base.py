@@ -1,6 +1,6 @@
 import logging
 
-import httpx
+from fastapi.datastructures import Headers
 from fastapi.requests import Request
 from httpx import AsyncClient
 
@@ -15,3 +15,9 @@ class BaseAsyncGateway:
     @staticmethod
     def clear_params(params: dict) -> dict:
         return {k: v for k, v in params.items() if v}
+
+    @staticmethod
+    def clear_headers(headers: dict | Headers) -> dict:
+        not_allowed_headers = ('content-length',)
+        headers = dict(headers)
+        return {k: v for k, v in headers.items() if k.lower() not in not_allowed_headers}

@@ -22,7 +22,7 @@ async def wait_keycloak():
         except KeycloakError as e:
             logger.info(f"Connection to keycloak failed. Retrying...")
             logger.info(e)
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
     if not connected:
         logger.info("Connection to keycloak failed...")
         raise ConnectionError(settings.KeycloakSettings().KEYCLOAK_HOST)

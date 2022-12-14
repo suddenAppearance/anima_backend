@@ -2,12 +2,11 @@ import logging
 
 from fastapi.requests import Request
 from httpx import AsyncClient
-from keycloak import KeycloakAdmin
 
 from core import settings
 from gateways.animation_service import AnimationServiceGateway
 from gateways.file_service import FileServiceGateway
-from gateways.keycloak import keycloak_gateway
+from gateways.keycloak import keycloak_gateway, KeycloakGateway
 from gateways.project_service import ProjectServiceGateway
 
 project_service_client = AsyncClient(base_url=settings.GatewaySettings().PROJECT_SERVICE_GATEWAY)
@@ -22,7 +21,7 @@ class BaseService:
         self._project_service_gateway: ProjectServiceGateway | None = None
         self._animation_service_gateway: AnimationServiceGateway | None = None
         self._file_service_gateway: FileServiceGateway | None = None
-        self._keycloak: KeycloakAdmin | None = None
+        self._keycloak: KeycloakGateway | None = None
 
     @property
     def animation_service_gateway(self):
@@ -48,3 +47,5 @@ class BaseService:
     @property
     def keycloak(self):
         self._keycloak = self._keycloak or keycloak_gateway
+        self._keycloak.admin.get_token()
+        return self._keycloak

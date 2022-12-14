@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from core import settings
 from keycloak import KeycloakOpenID, KeycloakAdmin
@@ -30,6 +31,12 @@ class KeycloakGateway:
 
     def userinfo(self, token) -> dict[str, Any]:
         return self.client.userinfo(token=token)
+
+    def get_user_by_sub(self, sub: UUID) -> dict[str, Any]:
+        return self.admin.get_user(user_id=str(sub))
+
+    def login(self, username: str, password: str) -> dict:
+        return self.client.token(username, password)
 
 
 keycloak_gateway = KeycloakGateway(

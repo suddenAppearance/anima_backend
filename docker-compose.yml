@@ -147,6 +147,8 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    logging:
+      driver: none
 
   minio:
     image: minio/minio:latest

@@ -1,8 +1,7 @@
-import logging
 from logging.config import dictConfig
 
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.api_v1.api import router as api_v1
 from core import settings

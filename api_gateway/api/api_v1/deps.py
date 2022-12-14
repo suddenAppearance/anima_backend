@@ -1,12 +1,16 @@
 import logging
 
 from fastapi import Security
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer, HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger("api")
 
-bearer = HTTPBearer()
+bearer = OAuth2PasswordBearer(tokenUrl="api/v1/auth/token/")
+http_bearer = HTTPBearer()
 
 
-async def auth_required(authorization: HTTPAuthorizationCredentials = Security(bearer)) -> None:
+async def auth_required(
+    authorization: HTTPAuthorizationCredentials = Security(bearer),
+    http_authorization: HTTPAuthorizationCredentials = Security(http_bearer),
+) -> None:
     pass
