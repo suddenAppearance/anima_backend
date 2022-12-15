@@ -15,3 +15,7 @@ class AnimationsService(BaseService):
     async def get_all(self) -> list[AnimationRetrieveSchema]:
         animations = await self.repository.get_all()
         return [AnimationRetrieveSchema.from_orm(animation) for animation in animations]
+
+    async def get_by_project_id(self, project_id: int) -> list[AnimationRetrieveSchema]:
+        animations = await self.repository.get_all_by_project_id(project_id=project_id)
+        return [AnimationRetrieveSchema.from_orm(animation) for animation in animations]

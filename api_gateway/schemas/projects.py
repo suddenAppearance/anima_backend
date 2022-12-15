@@ -25,3 +25,7 @@ class ProjectRetrieveSchema(ProjectCreateSchema):
 
     class Config:
         orm_mode = True
+
+
+class ProjectDetailRetrieveSchema(ProjectRetrieveSchema):
+    animations: list[dict]
