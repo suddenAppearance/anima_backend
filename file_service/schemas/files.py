@@ -6,6 +6,7 @@ from pydantic import BaseModel, validator
 
 class FileInfoRetrieveSchema(BaseModel):
     id: UUID
+    author_id: UUID
     bucket_name: str
     minio_path: str
     initial_filename: str

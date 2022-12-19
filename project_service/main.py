@@ -17,6 +17,8 @@ app = FastAPI(
 )
 
 # Middleware
+app.add_middleware(KeycloakAuthenticationMiddleware, backend=KeycloakAuthBackend())
+app.middleware("http")(exceptions_wrapper)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.AppConfig().CORS_ALLOW_ORIGINS,
@@ -24,8 +26,6 @@ app.add_middleware(
     allow_methods=settings.AppConfig().CORS_ALLOW_METHODS,
     allow_headers=settings.AppConfig().CORS_ALLOW_HEADERS,
 )
-app.add_middleware(KeycloakAuthenticationMiddleware, backend=KeycloakAuthBackend())
-app.middleware("http")(exceptions_wrapper)
 
 
 @app.on_event("startup")

@@ -12,6 +12,7 @@ fastapi = {extras = ["all"], version = "^0.85.1"}
 httpx = "^0.23.0"
 pyjwt = "^2.6.0"
 python-keycloak = "^2.6.0"
+orjson = "^3.8.3"
 
 
 [build-system]

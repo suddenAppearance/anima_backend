@@ -1,10 +1,10 @@
 import hashlib
 import os.path
 from io import BytesIO
-from uuid import uuid4
+from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
-from typing.io import IO, BinaryIO
+from typing.io import BinaryIO
 
 from models import File
 from schemas.base import MinioBuckets
@@ -56,7 +56,7 @@ class FileService(BaseService):
     async def create(self, file: UploadFile) -> FileInfoRetrieveSchema:
         if await self.repository.get_by_filename_and_author_id(file.filename, self.request.user.sub):
             raise HTTPException(
-                status_code=409, detail={"message": f"Current already has file with name `{file.filename}`"}
+                status_code=409, detail={"message": f"Current user already has file with name `{file.filename}`"}
             )
         file_obj = self.get_file_obj(file)
         await self.minio_upload_file(file)
@@ -66,3 +66,9 @@ class FileService(BaseService):
     async def get_all(self) -> list[FileInfoRetrieveSchema]:
         files = await self.repository.get_all()
         return [FileInfoRetrieveSchema.from_orm(file) for file in files]
+
+    async def get_file_info_by_id(self, id: UUID):
+        file = await self.repository.get_by_id(id)
+        if not file:
+            return None
+        return FileInfoRetrieveSchema.from_orm(file)
