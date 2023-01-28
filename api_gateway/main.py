@@ -1,10 +1,8 @@
-import logging
 from logging.config import dictConfig
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import schemas.base
 from api.api_v1.api import router as api_v1
 from core import settings
 from core.launch import wait_keycloak
@@ -12,7 +10,6 @@ from core.patches import patch_httpx
 from gateways.keycloak import keycloak_gateway
 from middleware.authorization import KeycloakAuthenticationMiddleware, KeycloakAuthBackend
 from middleware.exceptions import exceptions_wrapper
-from services.base import project_service_client, animation_service_client, file_service_client
 
 dictConfig(settings.LogConfig().config)
 
@@ -42,9 +39,6 @@ async def on_startup(_=None):
 @app.on_event("shutdown")
 async def on_shutdown(_=None):
     keycloak_gateway.close()
-    await project_service_client.aclose()
-    await animation_service_client.aclose()
-    await file_service_client.aclose()
 
 
 app.include_router(api_v1, prefix="/api/v1")

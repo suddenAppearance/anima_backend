@@ -1,4 +1,3 @@
-from httpx import AsyncClient
 from pydantic import BaseSettings, AnyUrl
 from urllib3.util import Url
 
@@ -79,9 +78,3 @@ class AppConfig(BaseSettings):
     CORS_ALLOW_METHODS: list[str] = ["*"]
     CORS_ALLOW_ORIGINS: list[str] = ["*"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
-
-
-class GatewaySettings(BaseSettings):
-    PROJECT_SERVICE_GATEWAY: AnyUrl
-    ANIMATION_SERVICE_GATEWAY: AnyUrl
-    FILE_SERVICE_GATEWAY: AnyUrl

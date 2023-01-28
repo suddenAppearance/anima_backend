@@ -17,121 +17,6 @@ services:
     logging:
       driver: none
 
-  project-service-db:
-    image: postgres:14.2
-    ports:
-      - "30432:5432"
-    env_file:
-      - .env
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - pg-project-service-data:/var/lib/postgresql/data
-
-    logging:
-      driver: none
-
-  animation-service-db:
-    image: postgres:14.2
-    ports:
-      - "31432:5432"
-    env_file:
-      - .env
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - pg-animation-service-data:/var/lib/postgresql/data
-
-    logging:
-      driver: none
-
-  file-service-db:
-    image: postgres:14.2
-    ports:
-      - "32432:5432"
-    env_file:
-      - .env
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - pg-file-service-data:/var/lib/postgresql/data
-
-    logging:
-      driver: none
-
-  project-service:
-    build:
-      context: project_service
-      dockerfile: Dockerfile
-    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    env_file:
-      - .env
-    environment:
-      POSTGRES_HOST: project-service-db
-    volumes:
-      - ./project_service:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - project-service-db
-
-  api-gateway:
-    build:
-      context: api_gateway
-      dockerfile: Dockerfile
-    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    env_file:
-      - .env
-    volumes:
-      - ./api_gateway:/app
-    ports:
-      - "8888:8000"
-    depends_on:
-      - keycloak
-
-  animation-service:
-    build:
-      context: animation_service
-      dockerfile: Dockerfile
-    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    env_file:
-      - .env
-    environment:
-      POSTGRES_HOST: animation-service-db
-    volumes:
-      - ./animation_service:/app
-    ports:
-      - "8001:8000"
-    depends_on:
-      - animation-service-db
-
-  file-service:
-    build:
-      context: file_service
-      dockerfile: Dockerfile
-    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
-    env_file:
-      - .env
-    environment:
-      POSTGRES_HOST: file-service-db
-    volumes:
-      - ./file_service:/app
-    ports:
-      - "8002:8000"
-    depends_on:
-      - file-service-db
-      - minio
-
-
   keycloak:
     depends_on:
       - postgres
@@ -145,10 +30,10 @@ services:
       KEYCLOAK_LOGLEVEL: DEBUG
     image: jboss/keycloak:latest
     ports:
-      - "8080:8080"
+      - "8787:8080"
     restart: unless-stopped
-    logging:
-      driver: none
+#    logging:
+#      driver: none
 
   minio:
     image: minio/minio:latest
@@ -163,9 +48,18 @@ services:
     logging:
       driver: none
 
+  api-gateway:
+    build:
+      context: api_gateway
+      dockerfile: Dockerfile
+    command: bash -c "uvicorn main:app"
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./api_gateway:/app
+
 volumes:
   pg-data:
-  pg-project-service-data:
-  pg-animation-service-data:
-  pg-file-service-data:
   minio-data:
