@@ -1,4 +1,4 @@
-from pydantic import BaseSettings, AnyUrl
+from pydantic import BaseSettings
 from urllib3.util import Url
 
 
@@ -32,11 +32,21 @@ class DatabaseSettings(BaseSettings):
         )
 
 
-class KeycloakSettings(BaseSettings):
-    KEYCLOAK_HOST: str
-    KEYCLOAK_REALM: str
-    KEYCLOAK_ADMIN_EMAIL: str
-    KEYCLOAK_ADMIN_PASSWORD: str
+class MinioConfig(BaseSettings):
+    MINIO_SERVER_HOST: str = "minio"
+    MINIO_SERVER_PORT: str = "9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_SECURE: bool = False
+    MINIO_PROXY_HOST: str = "localhost:9000"
+
+    def get_url(self):
+        return str(
+            Url(
+                host=self.MINIO_SERVER_HOST,
+                port=self.MINIO_SERVER_PORT
+            )
+        )
 
 
 class LogConfig(BaseSettings):
@@ -75,10 +85,6 @@ class LogConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
-    CORS_ALLOW_METHODS: list[str] = ["*"]
-    CORS_ALLOW_ORIGINS: list[str] = ["*"]
-    CORS_ALLOW_HEADERS: list[str] = ["*"]
-
-
-class GatewaySettings(BaseSettings):
-    FILE_SERVICE_GATEWAY: str = "http://file-service:8000/"
+    CORS_ALLOW_METHODS = ["*"]
+    CORS_ALLOW_ORIGINS = ["*"]
+    CORS_ALLOW_HEADERS = ["*"]

@@ -40,6 +40,7 @@ services:
     restart: unless-stopped
     ports:
       - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
+      - "${MINIO_SERVER_PORT}:${MINIO_SERVER_PORT}"
     env_file:
       - .env
     command: server --address 0.0.0.0:${MINIO_SERVER_PORT} --console-address 0.0.0.0:${MINIO_CONSOLE_PORT} /data
@@ -48,17 +49,37 @@ services:
     logging:
       driver: none
 
+  minio-proxy:
+    image: nginx:latest
+    volumes:
+      - ./minio-nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8080:8080"
+      - "443:443"
+
   api-gateway:
     build:
       context: api_gateway
       dockerfile: Dockerfile
-    command: bash -c "uvicorn main:app"
+    command: bash -c "uvicorn main:app --host 0.0.0.0"
     ports:
-      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+      - "${API_GATEWAY_PORT}:8000"
     env_file:
       - .env
     volumes:
       - ./api_gateway:/app
+
+  file-service:
+    build:
+      context: file_service
+      dockerfile: Dockerfile
+    command: bash -c "uvicorn main:app --host 0.0.0.0"
+    ports:
+      - "${FILE_SERVICE_PORT}:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./file_service:/app
 
 volumes:
   pg-data:

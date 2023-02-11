@@ -14,3 +14,7 @@ async def auth_required(
     http_authorization: HTTPAuthorizationCredentials = Security(http_bearer),
 ) -> None:
     pass
+
+
+def get_logger():
+    return logger
