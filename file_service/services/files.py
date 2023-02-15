@@ -6,19 +6,19 @@ from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
 from typing.io import BinaryIO
-from urllib3.util import Url
 
 from core import settings
 from models import File
+from repositories.files import FileMetaRepository
 from schemas.base import MinioBuckets
-from schemas.files import FileInfoRetrieveSchema
-from services.base import BaseService
+from schemas.files import FileInfoRetrieveSchema, FileMetaRetrieveSchema, FileMetaTypeEnum
+from services.base import FileServiceMixin, MinioMixin, FileMetaServiceMixin
 
 
-class FileService(BaseService):
+class FileService(FileServiceMixin, MinioMixin):
     @property
     def repository(self):
-        return self.files_repository
+        return self.file_repository
 
     def get_minio_path(self, filename: str) -> str:
         return os.path.join(str(self.request.user.sub), filename)
@@ -37,7 +37,7 @@ class FileService(BaseService):
         return os.fstat(file.fileno()).st_size
 
     def get_file_obj(self, file: UploadFile) -> File:
-        file = File(
+        return File(
             author_id=self.request.user.sub,
             bucket_name=MinioBuckets.USERS_FILES,
             minio_path=self.get_minio_path(file.filename),
@@ -45,7 +45,6 @@ class FileService(BaseService):
             size=self.get_file_size(file.file),
             hash=self.get_hash_sum(file.file),
         )
-        return file
 
     async def minio_upload_file(self, file: UploadFile):
         self.minio.put_object(
@@ -91,3 +90,21 @@ class FileService(BaseService):
         file = FileInfoRetrieveSchema.from_orm(file)
         file.download_url = await self.get_presigned_url(file)
         return file
+
+
+class FileMetaService(FileMetaServiceMixin, FileServiceMixin):
+    @property
+    def repository(self) -> FileMetaRepository:
+        return self.file_meta_repository
+
+    async def get_full_file(self, file_id: UUID) -> FileMetaRetrieveSchema:
+        full_file = await self.repository.get_by_file_id(file_id, load_file=True)
+        return FileMetaRetrieveSchema.from_orm(full_file) if full_file else None
+
+    async def get_full_by_type(self, type: FileMetaTypeEnum) -> list[FileMetaRetrieveSchema]:
+        full_files = await self.repository.get_by_type(type, load_file=True)
+        full_files = [FileMetaRetrieveSchema.from_orm(file) for file in full_files]
+        for full_file in full_files:
+            full_file.file.download_url = await self.file_service.get_presigned_url(full_file.file)
+
+        return full_files

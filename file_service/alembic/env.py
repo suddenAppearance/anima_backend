@@ -25,11 +25,17 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def include_schemas():
+    def in_schema(object, name, type_, reflected, compare_to):
+        return type_ != "table" or object.schema == settings.DatabaseSettings().POSTGRES_SCHEMA
+
+    return in_schema
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -49,6 +55,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table_schema=settings.DatabaseSettings().POSTGRES_SCHEMA,
     )
 
     with context.begin_transaction():
@@ -69,7 +76,13 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            version_table_schema=settings.DatabaseSettings().POSTGRES_SCHEMA,
+            include_object=include_schemas()
+        )
 
         with context.begin_transaction():
             context.run_migrations()

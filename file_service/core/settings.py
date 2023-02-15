@@ -8,6 +8,7 @@ class DatabaseSettings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+    POSTGRES_SCHEMA: str = "file_service"
 
     def get_async_url(self) -> str:
         return str(

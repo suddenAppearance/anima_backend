@@ -1,4 +1,6 @@
 from datetime import datetime
+from enum import Enum
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, validator, AnyUrl
@@ -28,3 +30,19 @@ class FileInfoRetrieveSchema(BaseModel):
                 return f"{size:3.1f} {unit}B"
             size /= 1024
         return f"{size:.1f} YB"
+
+
+class FileMetaTypeEnum(str, Enum):
+    CHARACTER = "CHARACTER"
+    ANIMATION = "ANIMATION"
+
+
+class FileMetaRetrieveSchema(BaseModel):
+    file_id: UUID
+    title: str
+    type: FileMetaTypeEnum
+
+    file: FileInfoRetrieveSchema
+
+    class Config:
+        orm_mode = True

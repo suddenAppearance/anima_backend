@@ -1,18 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, bindparam
+from sqlalchemy.orm import selectinload
 
-from models import File
+from models import File, FileMeta
 from repositories.base import BaseRepository
 
 
 class FilesRepository(BaseRepository[File]):
-    async def create(self, file: File) -> File:
-        self.session.add(file)
-        await self.session.flush()
-        await self.session.refresh(file)
-        return file
-
     async def get_by_id(self, id: UUID) -> File | None:
         statement = select(File).filter(File.id == id)
         return await self.one_or_none(statement)
@@ -33,3 +28,25 @@ class FilesRepository(BaseRepository[File]):
         statement = delete(File).filter(File.id == id)
         result = await self.session.execute(statement)
         return result.rowcount > 0
+
+
+class FileMetaRepository(BaseRepository[FileMeta]):
+    class PreparedStatements:
+        get_by_file_id = select(FileMeta).filter(FileMeta.file_id == bindparam("file_id"))
+        get_by_type = select(FileMeta).filter(FileMeta.type == bindparam("type"))
+
+    async def get_by_file_id(self, file_id: UUID, load_file: bool = False) -> FileMeta | None:
+        return await self.one_or_none(
+            self.PreparedStatements.get_by_file_id
+            if not load_file
+            else self.PreparedStatements.get_by_file_id.options(selectinload(FileMeta.file)),
+            params={"file_id": file_id}
+        )
+
+    async def get_by_type(self, type: str, load_file: bool = False) -> list[FileMeta]:
+        return await self.all(
+            self.PreparedStatements.get_by_type
+            if not load_file
+            else self.PreparedStatements.get_by_type.options(selectinload(FileMeta.file)),
+            params={"type": type}
+        )

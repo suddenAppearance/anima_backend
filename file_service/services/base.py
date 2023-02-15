@@ -2,13 +2,19 @@ import logging
 
 from fastapi import Depends
 from fastapi.requests import Request
-from fastapi.responses import Response
 from minio import Minio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.api_v1.deps import get_session
 from core import settings
-from repositories.files import FilesRepository
+from repositories.files import FilesRepository, FileMetaRepository
+
+minio_service = Minio(
+    endpoint=settings.MinioConfig().get_url(),
+    access_key=settings.MinioConfig().MINIO_ACCESS_KEY,
+    secret_key=settings.MinioConfig().MINIO_SECRET_KEY,
+    secure=settings.MinioConfig().MINIO_SECURE,
+)
 
 
 class BaseService:
@@ -16,21 +22,57 @@ class BaseService:
         self.request = request
         self.session = session
         self.logger = logging.getLogger("api")
-        self._minio: Minio | None = None
-        self._files_repository: FilesRepository | None = None
 
+
+class MinioMixin(BaseService):
     @property
     def minio(self):
-        self._minio = self._minio or Minio(
-            endpoint=settings.MinioConfig().get_url(),
-            access_key=settings.MinioConfig().MINIO_ACCESS_KEY,
-            secret_key=settings.MinioConfig().MINIO_SECRET_KEY,
-            secure=settings.MinioConfig().MINIO_SECURE
-        )
-        return self._minio
+        if not hasattr(self.request, "_minio"):
+            setattr(
+                self.request,
+                "_minio",
+                minio_service,
+            )
+        minio: Minio = getattr(self.request, "_minio")
+        return minio
+
+
+class FileServiceMixin(BaseService):
+    @property
+    def file_service(self):
+        from services.files import FileService
+
+        if not hasattr(self.request, "_file_service"):
+            setattr(self.request, "_file_service", FileService(self.request, self.session))
+        file_service: FileService = getattr(self.request, "_file_service")
+
+        return file_service
 
     @property
-    def files_repository(self):
-        self._files_repository = self._files_repository or FilesRepository(self.session)
-        return self._files_repository
+    def file_repository(self):
+        if not hasattr(self.request, "_file_repository"):
+            setattr(self.request, "_file_repository", FilesRepository(self.session))
+        file_repository: FilesRepository = getattr(self.request, "_file_repository")
 
+        return file_repository
+
+
+class FileMetaServiceMixin(BaseService):
+    @property
+    def file_meta_service(self):
+        from services.files import FileMetaService
+
+        if not hasattr(self.request, "_file_meta_service"):
+            setattr(self.request, "_file_meta_service", FileMetaService(self.request, self.session))
+        file_meta_service: FileMetaService = getattr(self.request, "_file_meta_service")
+
+        return file_meta_service
+
+    @property
+    def file_meta_repository(self):
+
+        if not hasattr(self.request, "_file_meta_repository"):
+            setattr(self.request, "_file_meta_repository", FileMetaRepository(self.session))
+        file_meta_repository: FileMetaRepository = getattr(self.request, "_file_meta_repository")
+
+        return file_meta_repository
