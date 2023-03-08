@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, validator, AnyUrl
+from pydantic import BaseModel, AnyUrl
 
 
 class FileInfoRetrieveSchema(BaseModel):
@@ -17,18 +17,6 @@ class FileInfoRetrieveSchema(BaseModel):
     download_url: AnyUrl | None
 
     created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-    @validator("pretty_size")
-    def prettify_size(cls, value: str | None, values: dict[str, ...]) -> str:
-        size: int = values["size"]
-        for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
-            if abs(size) < 1024:
-                return f"{size:3.1f} {unit}B"
-            size /= 1024
-        return f"{size:.1f} YB"
 
 
 class FileMetaTypeEnum(str, Enum):
@@ -48,6 +36,3 @@ class FileMetaRetrieveSchema(BaseModel):
     type: FileMetaTypeEnum
 
     file: FileInfoRetrieveSchema
-
-    class Config:
-        orm_mode = True

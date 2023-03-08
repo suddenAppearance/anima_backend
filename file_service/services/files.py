@@ -8,10 +8,10 @@ from fastapi import UploadFile, HTTPException
 from typing.io import BinaryIO
 
 from core import settings
-from models import File
+from models import File, FileMeta
 from repositories.files import FileMetaRepository
 from schemas.base import MinioBuckets
-from schemas.files import FileInfoRetrieveSchema, FileMetaRetrieveSchema, FileMetaTypeEnum
+from schemas.files import FileInfoRetrieveSchema, FileMetaRetrieveSchema, FileMetaTypeEnum, FileMetaCreateSchema
 from services.base import FileServiceMixin, MinioMixin, FileMetaServiceMixin
 
 
@@ -83,19 +83,27 @@ class FileService(FileServiceMixin, MinioMixin):
         return url._replace(netloc=settings.MinioConfig().MINIO_PROXY_HOST).geturl()
 
     async def get_file_info_by_id(self, id: UUID):
-        file = await self.repository.get_by_id(id)
-        if not file:
+        file_obj = await self.repository.get_by_id(id)
+        if not file_obj:
             return None
 
-        file = FileInfoRetrieveSchema.from_orm(file)
-        file.download_url = await self.get_presigned_url(file)
-        return file
+        file_obj = FileInfoRetrieveSchema.from_orm(file_obj)
+        file_obj.download_url = await self.get_presigned_url(file_obj)
+        return file_obj
 
 
 class FileMetaService(FileMetaServiceMixin, FileServiceMixin):
     @property
     def repository(self) -> FileMetaRepository:
         return self.file_meta_repository
+
+    async def create(self, meta: FileMetaCreateSchema) -> FileMetaRetrieveSchema:
+        file_obj = await self.file_service.get_file_info_by_id(meta.file_id)
+        if not file_obj:
+            raise HTTPException(status_code=404, detail="Not found")
+
+        await self.repository.create(FileMeta(**meta.dict()))
+        return await self.get_full_file(meta.file_id)
 
     async def get_full_file(self, file_id: UUID) -> FileMetaRetrieveSchema:
         full_file = await self.repository.get_by_file_id(file_id, load_file=True)

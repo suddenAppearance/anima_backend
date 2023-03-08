@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, UploadFile, Query
 
 from api.api_v1.deps import auth_required
-from schemas.files import FileInfoRetrieveSchema, FileMetaTypeEnum, FileMetaRetrieveSchema
+from schemas.files import FileInfoRetrieveSchema, FileMetaTypeEnum, FileMetaRetrieveSchema, FileMetaCreateSchema
 from services.files import FileService, FileMetaService
 
 router = APIRouter()
@@ -17,6 +17,11 @@ async def upload_file(file: UploadFile, file_service: FileService = Depends()):
 @router.get("/", dependencies=[Depends(auth_required)], response_model=list[FileMetaRetrieveSchema])
 async def get_all(file_meta_service: FileMetaService = Depends(), type: FileMetaTypeEnum = Query(...)):
     return await file_meta_service.get_full_by_type(type)
+
+
+@router.post("/", dependencies=[Depends(auth_required)], response_model=FileMetaRetrieveSchema)
+async def create_file_meta(meta: FileMetaCreateSchema, file_meta_service: FileMetaService = Depends()):
+    return await file_meta_service.create(meta)
 
 
 @router.get("/{id:uuid}/", response_model=FileMetaRetrieveSchema)

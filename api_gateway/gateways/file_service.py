@@ -1,3 +1,5 @@
+from fastapi import UploadFile
+
 from gateways.base import BaseAsyncGateway
 
 
@@ -6,3 +8,13 @@ class FileServiceGateway(BaseAsyncGateway):
         return await self._client.get(
             "/api/v1/files/", headers=self.clear_headers(self.request.headers), params={"type": type}
         )
+
+    async def upload_file(self, file: UploadFile):
+        return await self._client.put(
+            "/api/v1/files/",
+            headers=self.clear_headers(self.request.headers),
+            files={"file": (file.filename, file.file)},
+        )
+
+    async def create_meta(self, json: dict):
+        return await self._client.post("/api/v1/files/", headers=self.clear_headers(self.request.headers), json=json)
