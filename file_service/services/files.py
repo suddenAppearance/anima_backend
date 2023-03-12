@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
 from typing.io import BinaryIO
+from urllib3 import HTTPResponse
 
 from core import settings
 from models import File, FileMeta
@@ -46,6 +47,12 @@ class FileService(FileServiceMixin, MinioMixin):
             hash=self.get_hash_sum(file.file),
         )
 
+    def download_file(self, file: FileInfoRetrieveSchema) -> HTTPResponse:
+        return self.minio.get_object(
+            bucket_name=MinioBuckets.USERS_FILES.value,
+            object_name=file.minio_path,
+        )
+
     async def minio_upload_file(self, file: UploadFile):
         self.minio.put_object(
             bucket_name=MinioBuckets.USERS_FILES.value,
@@ -77,7 +84,7 @@ class FileService(FileServiceMixin, MinioMixin):
             self.minio.get_presigned_url(
                 method="GET",
                 bucket_name=MinioBuckets.USERS_FILES,
-                object_name=self.get_minio_path(file.initial_filename),
+                object_name=self.get_minio_path(file.initial_filename) if isinstance(file, File) else file.minio_path,
             )
         )
         return url._replace(netloc=settings.MinioConfig().MINIO_PROXY_HOST).geturl()
@@ -105,7 +112,7 @@ class FileMetaService(FileMetaServiceMixin, FileServiceMixin):
         await self.repository.create(FileMeta(**meta.dict()))
         return await self.get_full_file(meta.file_id)
 
-    async def get_full_file(self, file_id: UUID) -> FileMetaRetrieveSchema:
+    async def get_full_file(self, file_id: UUID) -> FileMetaRetrieveSchema | None:
         full_file = await self.repository.get_by_file_id(file_id, load_file=True)
         return FileMetaRetrieveSchema.from_orm(full_file) if full_file else None
 

@@ -3,6 +3,7 @@ from fastapi.requests import Request
 
 from api.api_v1.deps import auth_required
 from api.api_v1.endpoints.files import router as files_router
+from api.api_v1.endpoints.characters import router as characters_router
 from models import create_async_session, create_session
 from schemas.base import User
 
@@ -30,3 +31,4 @@ async def get_current_user(request: Request):
 
 
 router.include_router(files_router, prefix="/files", tags=["files"])
+router.include_router(characters_router, prefix="/models", tags=["characters"])

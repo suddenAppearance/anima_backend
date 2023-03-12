@@ -76,3 +76,15 @@ class FileMetaServiceMixin(BaseService):
         file_meta_repository: FileMetaRepository = getattr(self.request, "_file_meta_repository")
 
         return file_meta_repository
+
+
+class AnimationServiceMixin(BaseService):
+    @property
+    def animation_service(self):
+        from services.characters import AnimationService
+
+        if not hasattr(self.request, "_animation_service"):
+            setattr(self.request, "_animation_service", AnimationService(self.request, self.session))
+
+        animation_service: AnimationService = getattr(self.request, "_animation_service")
+        return animation_service
