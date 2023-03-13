@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, delete, bindparam
 from sqlalchemy.orm import selectinload
 
-from models import File, FileMeta
+from models import File, FileMeta, CompiledAnimation
 from repositories.base import BaseRepository
 
 
@@ -40,7 +40,7 @@ class FileMetaRepository(BaseRepository[FileMeta]):
             self.PreparedStatements.get_by_file_id
             if not load_file
             else self.PreparedStatements.get_by_file_id.options(selectinload(FileMeta.file)),
-            params={"file_id": file_id}
+            params={"file_id": file_id},
         )
 
     async def get_by_type(self, type: str, load_file: bool = False) -> list[FileMeta]:
@@ -48,5 +48,19 @@ class FileMetaRepository(BaseRepository[FileMeta]):
             self.PreparedStatements.get_by_type
             if not load_file
             else self.PreparedStatements.get_by_type.options(selectinload(FileMeta.file)),
-            params={"type": type}
+            params={"type": type},
+        )
+
+
+class CompiledAnimationRepository(BaseRepository[CompiledAnimation]):
+    class PreparedStatements:
+        get_by_model_id_and_animation_id = select(CompiledAnimation).filter(
+            CompiledAnimation.model_id == bindparam("model_id"),
+            CompiledAnimation.animation_id == bindparam("animation_id"),
+        )
+
+    async def get_by_model_id_and_animation_id(self, model_id: UUID, animation_id: UUID) -> CompiledAnimation | None:
+        return await self.one_or_none(
+            self.PreparedStatements.get_by_model_id_and_animation_id.options(selectinload(CompiledAnimation.file)),
+            params={"model_id": model_id, "animation_id": animation_id},
         )

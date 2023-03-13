@@ -1,24 +1,29 @@
 import asyncio
-import logging
+import io
+import math
 import os
+import tempfile
 from contextlib import contextmanager
 from datetime import datetime
-from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import HTTPException, Depends
+import bpy
+from fastapi import HTTPException, Depends, UploadFile
 from fastapi.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
-import bpy
-from starlette.responses import StreamingResponse
 
 from api.api_v1.deps import get_session
 from schemas.blender import Vector3D
-from schemas.files import FileMetaTypeEnum, FileMetaRetrieveSchema, FileInfoRetrieveSchema
-from services.base import AnimationServiceMixin, FileMetaServiceMixin, FileServiceMixin
+from schemas.files import (
+    FileMetaTypeEnum,
+    FileMetaRetrieveSchema,
+    FileInfoRetrieveSchema,
+    CompiledAnimationCreateSchema,
+)
+from services.base import AnimationServiceMixin, FileMetaServiceMixin, FileServiceMixin, CompiledAnimationServiceMixin
 
 
-class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceMixin):
+class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceMixin, CompiledAnimationServiceMixin):
     def __init__(self, request: Request, session: AsyncSession = Depends(get_session)):
         super().__init__(request=request, session=session)
         self.lock = asyncio.Lock()
@@ -41,7 +46,20 @@ class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceM
 
     @staticmethod
     def _import_fbx(filepath):
-        bpy.ops.import_scene.fbx(filepath=filepath)
+        bpy.ops.import_scene.fbx(filepath=filepath, use_custom_normals=True)
+
+    @staticmethod
+    def trim_empty_frames(obj):
+        keyframes = []
+        anim = obj.animation_data
+        if anim is not None and anim.action is not None:
+            for fcu in anim.action.fcurves:
+                for keyframe in fcu.keyframe_points:
+                    x, y = keyframe.co
+                    if x not in keyframes:
+                        keyframes.append((math.ceil(x)))
+
+        bpy.context.scene.frame_end = keyframes[-1]
 
     @staticmethod
     def _get_dimensions():
@@ -101,6 +119,7 @@ class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceM
         cls.select(obj1)
         cls.link_animation_data()
         cls.make_single_user_animation()
+        cls.trim_empty_frames(obj1)
 
     @classmethod
     def export(cls, filepath):
@@ -109,11 +128,14 @@ class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceM
             object_types={"ARMATURE", "MESH", "OTHER"},
             bake_anim=True,
             bake_anim_step=1,
-            bake_anim_use_all_bones=True,
+            bake_anim_use_all_bones=False,
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
             bake_anim_force_startend_keying=True,
             bake_anim_simplify_factor=1,
+            path_mode="COPY",
+            embed_textures=True,
+            mesh_smooth_type="EDGE",
         )
 
     async def _blender_link_animation(self, model: FileMetaRetrieveSchema, animation: FileMetaRetrieveSchema):
@@ -137,11 +159,18 @@ class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceM
 
         os.remove(model_path)
 
-        stream = open(animation_path, "rb")
+        stream = io.BytesIO(open(animation_path, "rb").read())
+        os.remove(animation_path)
 
         return stream
 
     async def animate(self, model_id: UUID, animation_model_id: UUID):
+        if model := await self.compiled_animation_service.get_by_model_id_and_animation_id(
+            model_id=model_id, animation_id=animation_model_id
+        ):
+            model.file.download_url = await self.file_service.get_presigned_url(model.file)
+            return model
+
         model = await self.file_meta_service.get_full_file(model_id)
         if not model:
             raise HTTPException(status_code=404)
@@ -156,12 +185,17 @@ class AnimationService(AnimationServiceMixin, FileMetaServiceMixin, FileServiceM
 
         stream = await self._blender_link_animation(model, animation)
 
-        response = StreamingResponse(stream)
-        response.raw_headers.append(
-            (
-                b"content-disposition",
-                f"attachment; filename*=utf-8''{quote(animation.file.initial_filename)}".encode("latin-1"),
+        with tempfile.TemporaryFile(mode='rb+') as f:
+            f.write(stream.read())
+            f.seek(0)
+            response = await self.file_service.create(
+                UploadFile(filename=f"{model.file.initial_filename} {animation.file.initial_filename}", file=f)
             )
+
+        model = await self.compiled_animation_service.create(
+            CompiledAnimationCreateSchema(file_id=response.id, model_id=model_id, animation_id=animation_model_id)
         )
 
-        return response
+        model.file.download_url = await self.file_service.get_presigned_url(model.file)
+
+        return model

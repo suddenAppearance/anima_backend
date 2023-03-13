@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.api_v1.deps import get_session
 from core import settings
-from repositories.files import FilesRepository, FileMetaRepository
+from repositories.files import FilesRepository, FileMetaRepository, CompiledAnimationRepository
 
 minio_service = Minio(
     endpoint=settings.MinioConfig().get_url(),
@@ -88,3 +88,25 @@ class AnimationServiceMixin(BaseService):
 
         animation_service: AnimationService = getattr(self.request, "_animation_service")
         return animation_service
+
+
+class CompiledAnimationServiceMixin(BaseService):
+    @property
+    def compiled_animation_service(self):
+        from services.files import CompiledAnimationService
+
+        if not hasattr(self.request, "_compiled_animation_service"):
+            setattr(self.request, "_compiled_animation_service", CompiledAnimationService(self.request, self.session))
+
+        compiled_animation_service: CompiledAnimationService = getattr(self.request, "_compiled_animation_service")
+        return compiled_animation_service
+
+    @property
+    def compiled_animation_repository(self):
+        if not hasattr(self.request, "_compiled_animation_repository"):
+            setattr(self.request, "_compiled_animation_repository", CompiledAnimationRepository(self.session))
+
+        compiled_animation_repository: CompiledAnimationRepository = getattr(
+            self.request, "_compiled_animation_repository"
+        )
+        return compiled_animation_repository

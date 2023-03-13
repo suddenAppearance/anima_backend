@@ -33,7 +33,9 @@ target_metadata = Base.metadata
 
 def include_schemas():
     def in_schema(object, name, type_, reflected, compare_to):
-        return type_ != "table" or object.schema == settings.DatabaseSettings().POSTGRES_SCHEMA
+        if type_ != "table" or object.schema == settings.DatabaseSettings().POSTGRES_SCHEMA:
+            return True
+        return False
 
     return in_schema
 
@@ -81,7 +83,8 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             version_table_schema=settings.DatabaseSettings().POSTGRES_SCHEMA,
-            include_object=include_schemas()
+            include_object=include_schemas(),
+            include_schemas=True
         )
 
         with context.begin_transaction():

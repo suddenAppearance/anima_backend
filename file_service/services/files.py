@@ -9,11 +9,18 @@ from typing.io import BinaryIO
 from urllib3 import HTTPResponse
 
 from core import settings
-from models import File, FileMeta
+from models import File, FileMeta, CompiledAnimation
 from repositories.files import FileMetaRepository
 from schemas.base import MinioBuckets
-from schemas.files import FileInfoRetrieveSchema, FileMetaRetrieveSchema, FileMetaTypeEnum, FileMetaCreateSchema
-from services.base import FileServiceMixin, MinioMixin, FileMetaServiceMixin
+from schemas.files import (
+    FileInfoRetrieveSchema,
+    FileMetaRetrieveSchema,
+    FileMetaTypeEnum,
+    FileMetaCreateSchema,
+    CompiledAnimationCreateSchema,
+    CompiledAnimationRetrieveSchema,
+)
+from services.base import FileServiceMixin, MinioMixin, FileMetaServiceMixin, CompiledAnimationServiceMixin
 
 
 class FileService(FileServiceMixin, MinioMixin):
@@ -123,3 +130,19 @@ class FileMetaService(FileMetaServiceMixin, FileServiceMixin):
             full_file.file.download_url = await self.file_service.get_presigned_url(full_file.file)
 
         return full_files
+
+
+class CompiledAnimationService(CompiledAnimationServiceMixin):
+    @property
+    def repository(self):
+        return self.compiled_animation_repository
+
+    async def create(self, anim: CompiledAnimationCreateSchema) -> CompiledAnimationRetrieveSchema:
+        animation = await self.repository.create(CompiledAnimation(**anim.dict()))
+        return CompiledAnimationRetrieveSchema.from_orm(animation)
+
+    async def get_by_model_id_and_animation_id(
+        self, model_id: UUID, animation_id: UUID
+    ) -> CompiledAnimationRetrieveSchema | None:
+        animation = await self.repository.get_by_model_id_and_animation_id(model_id, animation_id)
+        return CompiledAnimationRetrieveSchema.from_orm(animation) if animation else None

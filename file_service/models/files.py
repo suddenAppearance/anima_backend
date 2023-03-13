@@ -35,3 +35,17 @@ class FileMeta(Base):
     updated_at = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
 
     file: "File" = relationship("File", lazy="noload", back_populates="meta", uselist=False)
+
+
+class CompiledAnimation(Base):
+    __tablename__ = "compiled_animation"
+
+    file_id = Column(ForeignKey("file.id", ondelete="CASCADE"), primary_key=True)
+    model_id = Column(ForeignKey("file.id", ondelete="CASCADE"))
+    animation_id = Column(ForeignKey("file.id", ondelete="CASCADE"))
+
+    __table_args__ = (UniqueConstraint("model_id", "animation_id", name="_model_id_animation_id_uc"),)
+
+    file: "File" = relationship(
+        "File", lazy="selectin", uselist=False, foreign_keys=[file_id]
+    )

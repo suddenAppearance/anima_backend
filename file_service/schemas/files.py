@@ -53,3 +53,14 @@ class FileMetaRetrieveSchema(BaseModel):
         orm_mode = True
 
 
+class CompiledAnimationCreateSchema(BaseModel):
+    file_id: UUID
+    model_id: UUID
+    animation_id: UUID
+
+
+class CompiledAnimationRetrieveSchema(CompiledAnimationCreateSchema):
+    file: FileInfoRetrieveSchema
+
+    class Config:
+        orm_mode = True
