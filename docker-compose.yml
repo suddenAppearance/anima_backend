@@ -28,12 +28,13 @@ services:
       DB_USER: postgres
       DB_PASSWORD: qwerty123
       KEYCLOAK_LOGLEVEL: DEBUG
+      PROXY_ADDRESS_FORWARDING: "true"
     image: jboss/keycloak:latest
     ports:
       - "8787:8080"
     restart: unless-stopped
-#    logging:
-#      driver: none
+    logging:
+      driver: none
 
   minio:
     image: minio/minio:latest
@@ -43,16 +44,20 @@ services:
       - "${MINIO_SERVER_PORT}:${MINIO_SERVER_PORT}"
     env_file:
       - .env
+    environment:
+      MINIO_HTTP_TRACE: /dev/stderr
     command: server --address 0.0.0.0:${MINIO_SERVER_PORT} --console-address 0.0.0.0:${MINIO_CONSOLE_PORT} /data
     volumes:
       - minio-data:/data
-    logging:
-      driver: none
 
-  minio-proxy:
+  nginx:
     image: nginx:latest
+    depends_on:
+      - api-gateway
+      - keycloak
+      - minio
     volumes:
-      - ./minio-nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
       - "8080:8080"
       - "443:443"
@@ -80,6 +85,30 @@ services:
       - .env
     volumes:
       - ./file_service:/app
+
+  local-tunnel:
+    build:
+      context: .
+      dockerfile: lt.Dockerfile
+
+    depends_on:
+      - api-gateway
+
+    command: lt --port 8080 --subdomain dkuzovatov2014 --local-host nginx
+
+  # REPLACE PATH TO anima_frontend
+  frontend:
+    build:
+      context: ../anima_frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ../anima_frontend/.env
+    volumes:
+      - ../anima_frontend:/usr/src/app
+    ports:
+      - "3000:3000"
+
+    command: "npm start"
 
 volumes:
   pg-data:

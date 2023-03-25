@@ -94,7 +94,9 @@ class FileService(FileServiceMixin, MinioMixin):
                 object_name=self.get_minio_path(file.initial_filename) if isinstance(file, File) else file.minio_path,
             )
         )
-        return url._replace(netloc=settings.MinioConfig().MINIO_PROXY_HOST).geturl()
+        return url._replace(
+            netloc=settings.MinioConfig().WEB_PROXY_HOST, scheme=self.request.headers.get("x-forwarded-proto", "http")
+        ).geturl()
 
     async def get_file_info_by_id(self, id: UUID):
         file_obj = await self.repository.get_by_id(id)

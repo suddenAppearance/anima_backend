@@ -39,7 +39,7 @@ class MinioConfig(BaseSettings):
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_SECURE: bool = False
-    MINIO_PROXY_HOST: str = "localhost:9000"
+    WEB_PROXY_HOST: str = "localhost:9000"
 
     def get_url(self):
         return str(
