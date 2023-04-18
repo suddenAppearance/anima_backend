@@ -28,7 +28,6 @@ services:
       DB_USER: postgres
       DB_PASSWORD: qwerty123
       KEYCLOAK_LOGLEVEL: DEBUG
-      PROXY_ADDRESS_FORWARDING: "true"
     image: jboss/keycloak:latest
     ports:
       - "8787:8080"
@@ -54,6 +53,7 @@ services:
     image: nginx:latest
     depends_on:
       - api-gateway
+      - frontend
       - keycloak
       - minio
     volumes:
